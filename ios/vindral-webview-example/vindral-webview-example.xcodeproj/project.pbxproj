@@ -1,0 +1,396 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		212840512BA98CF500E57ABB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 212840502BA98CF500E57ABB /* AppDelegate.swift */; };
+		212840532BA98CF500E57ABB /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 212840522BA98CF500E57ABB /* SceneDelegate.swift */; };
+		212840552BA98CF500E57ABB /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 212840542BA98CF500E57ABB /* ViewController.swift */; };
+		212840582BA98CF500E57ABB /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 212840572BA98CF500E57ABB /* Base */; };
+		2128405A2BA98CF600E57ABB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 212840592BA98CF600E57ABB /* Assets.xcassets */; };
+		2128405D2BA98CF600E57ABB /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 2128405C2BA98CF600E57ABB /* Base */; };
+		212840682BA98E7D00E57ABB /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = 212840642BA98E7D00E57ABB /* Event.swift */; };
+		212840692BA98E7D00E57ABB /* VindralEventHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 212840652BA98E7D00E57ABB /* VindralEventHandler.swift */; };
+		2128406A2BA98E7D00E57ABB /* VindralEventHandlerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 212840662BA98E7D00E57ABB /* VindralEventHandlerDelegate.swift */; };
+		2128406C2BA98EB400E57ABB /* Bridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2128406B2BA98EB400E57ABB /* Bridge.swift */; };
+		2128406E2BA98EBA00E57ABB /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2128406D2BA98EBA00E57ABB /* Model.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2128404D2BA98CF500E57ABB /* vindral-webview-example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "vindral-webview-example.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		212840502BA98CF500E57ABB /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		212840522BA98CF500E57ABB /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		212840542BA98CF500E57ABB /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		212840572BA98CF500E57ABB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		212840592BA98CF600E57ABB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2128405C2BA98CF600E57ABB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		2128405E2BA98CF600E57ABB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		212840642BA98E7D00E57ABB /* Event.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
+		212840652BA98E7D00E57ABB /* VindralEventHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VindralEventHandler.swift; sourceTree = "<group>"; };
+		212840662BA98E7D00E57ABB /* VindralEventHandlerDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VindralEventHandlerDelegate.swift; sourceTree = "<group>"; };
+		2128406B2BA98EB400E57ABB /* Bridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Bridge.swift; sourceTree = "<group>"; };
+		2128406D2BA98EBA00E57ABB /* Model.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2128404A2BA98CF500E57ABB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		212840442BA98CF500E57ABB = {
+			isa = PBXGroup;
+			children = (
+				2128404F2BA98CF500E57ABB /* vindral-webview-example */,
+				2128404E2BA98CF500E57ABB /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2128404E2BA98CF500E57ABB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2128404D2BA98CF500E57ABB /* vindral-webview-example.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2128404F2BA98CF500E57ABB /* vindral-webview-example */ = {
+			isa = PBXGroup;
+			children = (
+				212840672BA98E7D00E57ABB /* event */,
+				212840502BA98CF500E57ABB /* AppDelegate.swift */,
+				212840522BA98CF500E57ABB /* SceneDelegate.swift */,
+				212840542BA98CF500E57ABB /* ViewController.swift */,
+				2128406B2BA98EB400E57ABB /* Bridge.swift */,
+				2128406D2BA98EBA00E57ABB /* Model.swift */,
+				212840562BA98CF500E57ABB /* Main.storyboard */,
+				212840592BA98CF600E57ABB /* Assets.xcassets */,
+				2128405B2BA98CF600E57ABB /* LaunchScreen.storyboard */,
+				2128405E2BA98CF600E57ABB /* Info.plist */,
+			);
+			path = "vindral-webview-example";
+			sourceTree = "<group>";
+		};
+		212840672BA98E7D00E57ABB /* event */ = {
+			isa = PBXGroup;
+			children = (
+				212840642BA98E7D00E57ABB /* Event.swift */,
+				212840652BA98E7D00E57ABB /* VindralEventHandler.swift */,
+				212840662BA98E7D00E57ABB /* VindralEventHandlerDelegate.swift */,
+			);
+			path = event;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2128404C2BA98CF500E57ABB /* vindral-webview-example */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 212840612BA98CF600E57ABB /* Build configuration list for PBXNativeTarget "vindral-webview-example" */;
+			buildPhases = (
+				212840492BA98CF500E57ABB /* Sources */,
+				2128404A2BA98CF500E57ABB /* Frameworks */,
+				2128404B2BA98CF500E57ABB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "vindral-webview-example";
+			productName = "vindral-webview-example";
+			productReference = 2128404D2BA98CF500E57ABB /* vindral-webview-example.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		212840452BA98CF500E57ABB /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1530;
+				LastUpgradeCheck = 1530;
+				TargetAttributes = {
+					2128404C2BA98CF500E57ABB = {
+						CreatedOnToolsVersion = 15.3;
+					};
+				};
+			};
+			buildConfigurationList = 212840482BA98CF500E57ABB /* Build configuration list for PBXProject "vindral-webview-example" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 212840442BA98CF500E57ABB;
+			productRefGroup = 2128404E2BA98CF500E57ABB /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2128404C2BA98CF500E57ABB /* vindral-webview-example */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2128404B2BA98CF500E57ABB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2128405A2BA98CF600E57ABB /* Assets.xcassets in Resources */,
+				2128405D2BA98CF600E57ABB /* Base in Resources */,
+				212840582BA98CF500E57ABB /* Base in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		212840492BA98CF500E57ABB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				212840692BA98E7D00E57ABB /* VindralEventHandler.swift in Sources */,
+				212840682BA98E7D00E57ABB /* Event.swift in Sources */,
+				2128406C2BA98EB400E57ABB /* Bridge.swift in Sources */,
+				212840552BA98CF500E57ABB /* ViewController.swift in Sources */,
+				212840512BA98CF500E57ABB /* AppDelegate.swift in Sources */,
+				212840532BA98CF500E57ABB /* SceneDelegate.swift in Sources */,
+				2128406A2BA98E7D00E57ABB /* VindralEventHandlerDelegate.swift in Sources */,
+				2128406E2BA98EBA00E57ABB /* Model.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		212840562BA98CF500E57ABB /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				212840572BA98CF500E57ABB /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		2128405B2BA98CF600E57ABB /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				2128405C2BA98CF600E57ABB /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		2128405F2BA98CF600E57ABB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		212840602BA98CF600E57ABB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		212840622BA98CF600E57ABB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y4JG56PL7S;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "vindral-webview-example/Info.plist";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.realsprint.vindral-webview-example.vindral-webview-example";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		212840632BA98CF600E57ABB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y4JG56PL7S;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "vindral-webview-example/Info.plist";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.realsprint.vindral-webview-example.vindral-webview-example";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		212840482BA98CF500E57ABB /* Build configuration list for PBXProject "vindral-webview-example" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2128405F2BA98CF600E57ABB /* Debug */,
+				212840602BA98CF600E57ABB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		212840612BA98CF600E57ABB /* Build configuration list for PBXNativeTarget "vindral-webview-example" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				212840622BA98CF600E57ABB /* Debug */,
+				212840632BA98CF600E57ABB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 212840452BA98CF500E57ABB /* Project object */;
+}
