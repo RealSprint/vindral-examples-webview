@@ -7,14 +7,14 @@ These instructions will help you get the project up and running on your local ma
 Before you start, make sure you have installed:
 
 - Xcode
-- CocoaPods
 
 ### Installation
 
 **Open the project in Xcode**
 
-Open the `.xcworkspace` file in Xcode.
+Open the `.xcodeproj` file in Xcode.
 
 **Run the project**
 
-Select an iOS simulator and click the 'Run' button or press Cmd + R.
+Select a real iOS device and click the 'Run' button or press Cmd + R.
+Running on a simulator is not recommended as the video playout utilizing hardware resources.
