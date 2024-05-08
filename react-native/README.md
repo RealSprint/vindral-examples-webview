@@ -17,6 +17,9 @@ Before you start, make sure you have installed:
 Navigate to the 'vindral-webview-example' directory and run the following command:
 `npm install`
 
+For dependencies like `react-native-google-cast` that add custom native code, you need to run the following command:
+`npx expo prebuild`
+
 **Run the project**
 
 Start the project using Expo:

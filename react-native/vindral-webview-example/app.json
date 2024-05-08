@@ -15,16 +15,27 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.vindralwebviewexample"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.vindralwebviewexample"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "@config-plugins/react-native-google-cast",
+        {
+          "iosReceiverAppId": "3F7711A9",
+          "androidReceiverAppId": "3F7711A9"
+        }
+      ]
+    ]
   }
 }
