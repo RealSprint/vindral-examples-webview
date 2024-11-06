@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
     private val gson = Gson()
     private lateinit var webView: WebView
     private var url =
-        "https://embed.vindral.com/?core.url=https://lb.cdn.vindral.com&core.channelId=vindral_demo1_ci_099ee1fa-80f3-455e-aa23-3d184e93e04f"
+        "https://player.vindral.com/?core.url=https://lb.cdn.vindral.com&core.channelId=vindral_demo1_ci_099ee1fa-80f3-455e-aa23-3d184e93e04f"
 
     companion object {
         private const val JS_INTERFACE = "Android"

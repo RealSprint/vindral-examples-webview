@@ -1,8 +1,8 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, View, Button } from "react-native";
-import WebView, { WebViewMessageEvent } from "react-native-webview";
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
+import { Button, StyleSheet, View } from "react-native";
 import { CastButton } from "react-native-google-cast";
+import WebView, { WebViewMessageEvent } from "react-native-webview";
 import { useVindralCast } from "./cast";
 
 interface Message {
@@ -96,7 +96,7 @@ export default function App() {
       <WebView
         ref={webViewRef}
         source={{
-          uri: `https://embed.vindral.com/?channelId=${channelId}`,
+          uri: `https://player.vindral.com/?channelId=${channelId}`,
         }}
         allowsFullscreenVideo
         mediaPlaybackRequiresUserAction={false}
