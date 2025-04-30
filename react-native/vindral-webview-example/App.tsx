@@ -32,32 +32,28 @@ interface ErrorMessage extends Message {
 }
 
 const script = `
-  async function run() {
-    let loops = 0;
-    while (!window.vindral) {
-      if (loops > 20) {
-        throw new Error("Could not find window.vindral");
-      }
-      await new Promise(r => setTimeout(r, 100));
-      loops++;
-    }
-    
-    window.vindral.on("playback state", (state) => window.ReactNativeWebView.postMessage(JSON.stringify({
-      type: "playback state",
-      state,
-    })));
-    window.vindral.on("volume state", (state) => window.ReactNativeWebView.postMessage(JSON.stringify({
-      type: "volume state",
-      state,
-    })));
-    window.vindral.on("error", (error) => window.ReactNativeWebView.postMessage(JSON.stringify({
-      type: "error",
-      error,
-    })));
-  }
-  run();
+  window.addEventListener("vindral-instance-ready", (event) => {
+    event.detail.on("playback state", (state) => {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: "playback state",
+        state,
+      }))
+    })
+    event.detail.on("volume state", (state) => {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: "volume state",
+        state,
+      }))
+    })
+    event.detail.on("error", (error) => {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: "error",
+        error,
+      }))
+    })
+  })
 
-  true;  // note: this is required, or you'll sometimes get silent failures
+  true  // note: this is required, or you'll sometimes get silent failures
 `;
 
 export default function App() {
