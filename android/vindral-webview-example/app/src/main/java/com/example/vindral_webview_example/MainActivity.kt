@@ -43,27 +43,31 @@ class MainActivity : ComponentActivity() {
     private val gson = Gson()
     private lateinit var webView: WebView
     private var url =
-        "https://embed.vindral.com/?core.url=https://lb.cdn.vindral.com&core.channelId=vindral_demo1_ci_099ee1fa-80f3-455e-aa23-3d184e93e04f"
+        "https://player.vindral.com/?core.url=https://lb.cdn.vindral.com&core.channelId=vindral_demo1_ci_099ee1fa-80f3-455e-aa23-3d184e93e04f"
 
     companion object {
+        // JavaScript code to handle Vindral events and communicate with the Android interface.
+        // Ensure that $JS_INTERFACE is correctly set up to avoid unnecessary errors.
         private const val JS_INTERFACE = "Android"
         private const val JS_CODE =
-            """
-            async function run() {
-                let loops = 0
-                while (!window.vindral) {
-                    if (loops > 20) {
-                      throw new Error("Could not find window.vindral")
-                    }
-                    await new Promise(r => setTimeout(r, 100))
-                    loops++
+        """
+        window.addEventListener("vindral-instance-ready", (event) => {
+            event.detail.on("playback state", (state) => {
+                if (window.$JS_INTERFACE.onPlaybackState) {
+                    window.$JS_INTERFACE.onPlaybackState(state)
                 }
-                
-                window.vindral.on("playback state", (state) => window.$JS_INTERFACE.onPlaybackState(state))
-                window.vindral.on("volume state", (state) => window.$JS_INTERFACE.onVolumeState(JSON.stringify(state)))
-                window.vindral.on("error", (error) => window.$JS_INTERFACE.onError(JSON.stringify(error)))
-            }
-            run()
+            })
+            event.detail.on("volume state", (state) => {
+                if (window.$JS_INTERFACE.onVolumeState) {
+                    window.$JS_INTERFACE.onVolumeState(JSON.stringify(state))
+                }
+            })
+            event.detail.on("error", (error) => {
+                if (window.$JS_INTERFACE.onError) {
+                    window.$JS_INTERFACE.onError(JSON.stringify(error))
+                }
+            })
+        })
         """
     }
 
