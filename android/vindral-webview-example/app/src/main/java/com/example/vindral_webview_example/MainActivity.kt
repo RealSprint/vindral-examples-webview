@@ -3,6 +3,7 @@ package com.example.vindral_webview_example
 import android.app.PictureInPictureParams
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -145,7 +146,7 @@ class MainActivity : ComponentActivity() {
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         if (pipSupported && Build.VERSION.SDK_INT <= Build.VERSION_CODES.R && canEnterPip.value) {
-            enterPip()
+            enterPip(userRequested = false)
         }
     }
 
@@ -164,7 +165,8 @@ class MainActivity : ComponentActivity() {
         if (pipSupported) setPictureInPictureParams(pipParams())
     }
 
-    private fun enterPip() {
+    // Only a tap on the PiP button explains a failure; leaving the app should not leave a Toast behind.
+    private fun enterPip(userRequested: Boolean) {
         if (!pipSupported) return
         val entered = try {
             enterPictureInPictureMode(pipParams())
@@ -174,7 +176,9 @@ class MainActivity : ComponentActivity() {
         }
         if (!entered) {
             Log.w(TAG, "picture-in-picture unavailable")
-            Toast.makeText(this, "Picture-in-picture is unavailable", Toast.LENGTH_SHORT).show()
+            if (userRequested) {
+                Toast.makeText(this, "Picture-in-picture is unavailable", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -198,7 +202,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @android.webkit.JavascriptInterface
-    fun onVolumeState(json: String) {
+    fun onVolumeState(json: String) = runOnUiThread {
         val volumeState = gson.fromJson(json, VindralVolumeState::class.java)
         Toast.makeText(
             this,
@@ -208,7 +212,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @android.webkit.JavascriptInterface
-    fun onError(json: String) {
+    fun onError(json: String) = runOnUiThread {
         val error = gson.fromJson(json, VindralError::class.java)
         Toast.makeText(this, "Error: $error", Toast.LENGTH_SHORT).show()
     }
@@ -222,6 +226,12 @@ class MainActivity : ComponentActivity() {
                 addJavascriptInterface(this@MainActivity, JS_INTERFACE)
 
                 webViewClient = object : WebViewClient() {
+                    // A new page has to start playing before picture-in-picture is offered again.
+                    override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                        super.onPageStarted(view, url, favicon)
+                        setCanEnterPip(false)
+                    }
+
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
                         Log.d(TAG, "bridge injected")
@@ -268,7 +278,7 @@ class MainActivity : ComponentActivity() {
                 }
                 if (pipSupported) {
                     Spacer(modifier = Modifier.width(16.dp))
-                    Button(onClick = { enterPip() }, enabled = canEnterPip.value) {
+                    Button(onClick = { enterPip(userRequested = true) }, enabled = canEnterPip.value) {
                         Text("PiP")
                     }
                 }
