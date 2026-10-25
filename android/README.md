@@ -29,7 +29,7 @@ Android WebView does not support the web Picture-in-Picture API, so the player's
 
 - **Manifest:** the activity sets `android:supportsPictureInPicture="true"` and handles `screenSize|smallestScreenSize|screenLayout|orientation` itself, so entering and leaving PiP does not recreate the activity and reload the player.
 - **Entering:** the PiP button in the control row, or leaving the app while the stream plays. Android 12 (API 31) and later enter by themselves through `setAutoEnterEnabled`; Android 8–11 (API 26–30) use `onUserLeaveHint`. Nothing happens before the first `playing` state or while paused.
-- **In the PiP window:** the app hides its own controls and the player's, by setting the player's `--vindral-ui-display` CSS variable to `none`.
+- **In the PiP window:** the app hides its own control row. It hides the player's controls by toggling an `android-pip` class on the page, which an injected `!important` rule turns into `--vindral-ui-display: none`. This keeps a `player.controlsEnabled=false` setting intact after leaving PiP.
 - **Keep the WebView running:** do not call `webView.onPause()` or `pauseTimers()` when the activity pauses. An activity in PiP is paused, but still visible.
 - **Closing:** `onStop()` pauses the player. It runs when the user closes the PiP window, and also when the app goes to the background without PiP.
 

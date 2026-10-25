@@ -73,6 +73,9 @@ class MainActivity : ComponentActivity() {
         private const val JS_CODE =
         """
         (() => {
+            const style = document.createElement("style")
+            style.textContent = ".android-pip vindral-player { --vindral-ui-display: none !important; }"
+            document.head.appendChild(style)
             let attached
             const attach = (vindral) => {
                 if (!vindral || vindral === attached) return
@@ -87,12 +90,10 @@ class MainActivity : ComponentActivity() {
         })()
         """
 
-        // The player's own controls are useless in the small window, so they are hidden there.
-        private fun playerUiScript(hidden: Boolean): String {
-            val style = "document.querySelector('vindral-player')?.style"
-            return if (hidden) "$style.setProperty('--vindral-ui-display', 'none')"
-            else "$style.removeProperty('--vindral-ui-display')"
-        }
+        // Hides the player's controls in the PiP window. The class rule is !important, so it wins over
+        // the inline value the player sets for player.controlsEnabled without overwriting it.
+        private fun playerUiScript(hidden: Boolean) =
+            "document.documentElement.classList.toggle('android-pip', $hidden)"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -188,11 +189,11 @@ class MainActivity : ComponentActivity() {
     @android.webkit.JavascriptInterface
     fun onPlaybackState(state: String) = runOnUiThread {
         Log.d(TAG, "playback state: $state")
-        when (VindralPlaybackState.valueOf(state.uppercase())) {
+        // Unknown states are ignored, so a newer player cannot crash the app.
+        when (state) {
             // A player that starts while the app is in the background is paused again.
-            VindralPlaybackState.PLAYING -> if (isStopped) pause() else setCanEnterPip(true)
-            VindralPlaybackState.PAUSED -> setCanEnterPip(false)
-            VindralPlaybackState.BUFFERING -> Unit
+            VindralPlaybackState.PLAYING.state -> if (isStopped) pause() else setCanEnterPip(true)
+            VindralPlaybackState.PAUSED.state -> setCanEnterPip(false)
         }
     }
 
@@ -228,6 +229,7 @@ class MainActivity : ComponentActivity() {
                             JS_CODE,
                             null
                         )
+                        webView.evaluateJavascript(playerUiScript(isInPip.value), null)
                     }
                 }
                 loadUrl(url)
