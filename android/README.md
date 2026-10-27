@@ -41,5 +41,3 @@ Limits of the example: the PiP window has no play/pause buttons (expand it to co
 ### Fullscreen
 
 The player's fullscreen button needs a `WebChromeClient` that implements `onShowCustomView` and `onHideCustomView`; without one, the button does nothing. The example puts the view it gets on top of the activity, hides the system bars, turns the screen to landscape, and leaves fullscreen on Back. Picture-in-Picture from fullscreen shows the fullscreen video.
-
-Tested on a Pixel with Android 17. Picture-in-Picture with the app's own button, before the player's button and fullscreen were added, was also tested on Android 11 (API 30) and Android 14 (API 34) emulators.
