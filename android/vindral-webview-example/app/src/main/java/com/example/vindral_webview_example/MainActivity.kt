@@ -75,10 +75,7 @@ class MainActivity : ComponentActivity() {
     private var fullscreenView: View? = null
     private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
     private val exitFullscreenOnBack = object : OnBackPressedCallback(false) {
-        override fun handleOnBackPressed() {
-            fullscreenCallback?.onCustomViewHidden()
-            exitFullscreen()
-        }
+        override fun handleOnBackPressed() = exitFullscreen()
     }
 
     private val pipSupported: Boolean
@@ -127,7 +124,8 @@ class MainActivity : ComponentActivity() {
                 return Promise.resolve()
             }
             // The user leaves picture-in-picture by expanding or closing the window.
-            Document.prototype.exitPictureInPicture = () => Promise.resolve()
+            Document.prototype.exitPictureInPicture = () =>
+                Promise.reject(new DOMException("Expand the window to leave picture-in-picture", "NotSupportedError"))
             window.androidPictureInPictureChanged = (isInPip) => {
                 const element = isInPip ? requested ?? window.vindral?.mediaElement : active
                 active = isInPip ? element : null
@@ -152,7 +150,6 @@ class MainActivity : ComponentActivity() {
 
         isInPip.value = isInPictureInPictureMode
         addOnPictureInPictureModeChangedListener { info ->
-            Log.d(TAG, "picture-in-picture: ${info.isInPictureInPictureMode}")
             isInPip.value = info.isInPictureInPictureMode
             webView.evaluateJavascript(pipScript(info.isInPictureInPictureMode), null)
         }
@@ -175,7 +172,6 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         setCanEnterPip(false)
-        Log.d(TAG, "stopped, pausing playback")
         if (::webView.isInitialized) pause()
     }
 
@@ -213,35 +209,41 @@ class MainActivity : ComponentActivity() {
         val entered = try {
             enterPictureInPictureMode(pipParams())
         } catch (error: IllegalStateException) {
-            Log.w(TAG, "picture-in-picture refused", error)
             false
         }
-        if (!entered && userRequested) {
-            Toast.makeText(this, "Picture-in-picture is unavailable", Toast.LENGTH_SHORT).show()
+        if (!entered) {
+            Log.w(TAG, "picture-in-picture unavailable")
+            if (userRequested) Toast.makeText(this, "Picture-in-picture is unavailable", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun exitFullscreen() {
         val view = fullscreenView ?: return
+        val callback = fullscreenCallback
         fullscreenView = null
         fullscreenCallback = null
         (window.decorView as FrameLayout).removeView(view)
         WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         exitFullscreenOnBack.isEnabled = false
+        callback?.onCustomViewHidden()
     }
 
     private fun play() {
-        webView.evaluateJavascript("window.vindral?.play()", null)
+        webView.evaluateJavascript("window.vindral.play()", null)
     }
 
     private fun pause() {
-        webView.evaluateJavascript("window.vindral?.pause()", null)
+        webView.evaluateJavascript("window.vindral.pause()", null)
     }
 
     @android.webkit.JavascriptInterface
     fun onPlaybackState(state: String) = runOnUiThread {
-        Log.d(TAG, "playback state: $state")
+        Toast.makeText(
+            this,
+            "Playback state: $state",
+            Toast.LENGTH_SHORT
+        ).show()
         // Unknown states are ignored, so a newer player cannot crash the app.
         when (state) {
             // A player that starts while the app is in the background is paused again.
@@ -255,7 +257,7 @@ class MainActivity : ComponentActivity() {
     fun requestPictureInPicture() = runOnUiThread { enterPip(userRequested = true) }
 
     @android.webkit.JavascriptInterface
-    fun onVolumeState(json: String) = runOnUiThread {
+    fun onVolumeState(json: String) {
         val volumeState = gson.fromJson(json, VindralVolumeState::class.java)
         Toast.makeText(
             this,
@@ -265,7 +267,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @android.webkit.JavascriptInterface
-    fun onError(json: String) = runOnUiThread {
+    fun onError(json: String) {
         val error = gson.fromJson(json, VindralError::class.java)
         Toast.makeText(this, "Error: $error", Toast.LENGTH_SHORT).show()
     }
@@ -287,7 +289,6 @@ class MainActivity : ComponentActivity() {
 
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
-                        Log.d(TAG, "bridge injected")
                         webView.evaluateJavascript(
                             JS_CODE,
                             null
@@ -299,6 +300,10 @@ class MainActivity : ComponentActivity() {
                 // Without this, the player's fullscreen button does nothing.
                 webChromeClient = object : WebChromeClient() {
                     override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+                        if (fullscreenView != null) {
+                            callback.onCustomViewHidden()
+                            return
+                        }
                         fullscreenView = view
                         fullscreenCallback = callback
                         (window.decorView as FrameLayout).addView(
