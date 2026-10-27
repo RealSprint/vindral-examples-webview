@@ -25,16 +25,16 @@ Click on the 'Run' button (the green arrow) or press Shift + F10. If you have a 
 
 ### Picture-in-Picture
 
-Android WebView does not support the web Picture-in-Picture API. The example puts the whole activity into Android Picture-in-Picture instead, which needs Android 8.0 (API 26), the example's `minSdk`. The code is in `AndroidManifest.xml` and `MainActivity.kt`:
+Android WebView does not support the web Picture-in-Picture API, so the example puts the whole activity into Android Picture-in-Picture, which needs Android 8.0 (API 26), the example's `minSdk`. The code is in `AndroidManifest.xml` and `MainActivity.kt`:
 
-- **Manifest:** the activity sets `android:supportsPictureInPicture="true"` and handles `screenSize|smallestScreenSize|screenLayout|orientation` itself, so entering and leaving PiP does not recreate the activity and reload the player.
-- **The player's PiP button:** the player only shows it when the web API exists. The app injects a stand-in for the API with `WebViewCompat.addDocumentStartJavaScript` from `androidx.webkit`, so it is in place before the player's scripts run. `requestPictureInPicture()` calls the app, which enters Android PiP, and the app tells the page when PiP starts and ends so the button shows the right state. This is a workaround: the stand-in covers only what the player uses, and `exitPictureInPicture()` rejects, because the user leaves PiP by expanding or closing the window. A WebView without `DOCUMENT_START_SCRIPT` support shows no button, but Home still enters PiP.
-- **Entering:** the player's PiP button, or pressing Home or switching apps while the stream plays (Back does not enter PiP). Android 12 (API 31) and later enter by themselves through `setAutoEnterEnabled`; Android 8–11 (API 26–30) use `onUserLeaveHint`. Home does nothing while paused.
-- **In the PiP window:** the app hides its own control row. It hides the player's controls by toggling an `android-pip` class on the page, which an injected `!important` rule turns into `--vindral-ui-display: none`. This keeps a `player.controlsEnabled=false` setting intact after leaving PiP.
-- **Keep the WebView running:** do not call `webView.onPause()` or `pauseTimers()` when the activity pauses. An activity in PiP is paused, but still visible.
-- **Closing:** `onStop()` pauses the player. It runs when the user closes the PiP window, and also when the app goes to the background without PiP. A `playing` state that arrives while the activity is stopped is paused again, because the SDK can resume playback when PiP ends.
+- **Manifest:** `android:supportsPictureInPicture="true"`, plus `configChanges` so that PiP does not recreate the activity and reload the player.
+- **The player's PiP button:** a stand-in for the web API, injected with `WebViewCompat.addDocumentStartJavaScript` from `androidx.webkit`, makes the player show its button and calls the app. It is a workaround that covers only what the player uses. A WebView without `DOCUMENT_START_SCRIPT` shows no button.
+- **Home:** enters PiP while the stream plays, through `setAutoEnterEnabled` on Android 12 and later and `onUserLeaveHint` on Android 8–11.
+- **In the PiP window:** the app hides its control row, and the player's controls through an `android-pip` class with an `!important` `--vindral-ui-display: none` rule, so a `player.controlsEnabled=false` setting survives.
+- **Keep the WebView running:** do not call `webView.onPause()` or `pauseTimers()`. An activity in PiP is paused, but still visible.
+- **Closing:** `onStop()` pauses the player, also when the user closes the PiP window. A `playing` state that arrives while the activity is stopped is paused again, because the SDK can resume playback when PiP ends.
 
-The PiP window is always 16:9. For streams with another aspect ratio, read `vindral.mediaElement.videoWidth` and `videoHeight` through the bridge and pass them to `setAspectRatio`. Check that `mediaElement` is a video element (it can be a canvas) and that both values are above 0, and clamp the ratio to Android's limits (1:2.39 to 2.39:1), or `setAspectRatio` throws. `setSourceRectHint` with the WebView's bounds gives a smoother enter animation.
+The PiP window is 16:9. For other aspect ratios, pass the video's size to `setAspectRatio`: check that `vindral.mediaElement` is a video with a size above 0, and clamp the ratio to 1:2.39–2.39:1, or it throws.
 
 Limits of the example: the PiP window has no play/pause buttons (expand it to control playback), audio focus and phone calls are not handled, and the activity's whole content becomes the PiP window.
 
