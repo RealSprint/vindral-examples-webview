@@ -127,6 +127,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        isInPip.value = isInPictureInPictureMode
         addOnPictureInPictureModeChangedListener { info ->
             isInPip.value = info.isInPictureInPictureMode
             webView.evaluateJavascript(pipScript(info.isInPictureInPictureMode), null)
