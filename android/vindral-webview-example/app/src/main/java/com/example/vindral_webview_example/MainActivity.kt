@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
 import com.example.vindral_webview_example.ui.theme.VindralwebviewexampleTheme
 import com.google.gson.Gson
 
@@ -58,7 +59,6 @@ class MainActivity : ComponentActivity() {
     // Picture-in-picture is only offered once playback has started, and never while the activity is stopped.
     private val canEnterPip = mutableStateOf(false)
     private val isInPip = mutableStateOf(false)
-    private var isStopped = false
 
     private val pipSupported: Boolean
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
@@ -122,19 +122,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        isStopped = false
-    }
-
     // Also runs when the user closes the picture-in-picture window. Do not pause the WebView
     // itself in onPause: the activity is paused, but still visible, while in picture-in-picture.
     override fun onStop() {
         super.onStop()
-        isStopped = true
         setCanEnterPip(false)
         Log.d(TAG, "stopped, pausing playback")
-        pause()
+        if (::webView.isInitialized) pause()
     }
 
     override fun onDestroy() {
@@ -145,7 +139,7 @@ class MainActivity : ComponentActivity() {
     // Android 12+ enters picture-in-picture by itself through setAutoEnterEnabled.
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (pipSupported && Build.VERSION.SDK_INT <= Build.VERSION_CODES.R && canEnterPip.value) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R && canEnterPip.value) {
             enterPip(userRequested = false)
         }
     }
@@ -174,11 +168,8 @@ class MainActivity : ComponentActivity() {
             Log.w(TAG, "picture-in-picture refused", error)
             false
         }
-        if (!entered) {
-            Log.w(TAG, "picture-in-picture unavailable")
-            if (userRequested) {
-                Toast.makeText(this, "Picture-in-picture is unavailable", Toast.LENGTH_SHORT).show()
-            }
+        if (!entered && userRequested) {
+            Toast.makeText(this, "Picture-in-picture is unavailable", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -187,7 +178,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun pause() {
-        if (::webView.isInitialized) webView.evaluateJavascript("window.vindral?.pause()", null)
+        webView.evaluateJavascript("window.vindral?.pause()", null)
     }
 
     @android.webkit.JavascriptInterface
@@ -196,7 +187,8 @@ class MainActivity : ComponentActivity() {
         // Unknown states are ignored, so a newer player cannot crash the app.
         when (state) {
             // A player that starts while the app is in the background is paused again.
-            VindralPlaybackState.PLAYING.state -> if (isStopped) pause() else setCanEnterPip(true)
+            VindralPlaybackState.PLAYING.state ->
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) setCanEnterPip(true) else pause()
             VindralPlaybackState.PAUSED.state -> setCanEnterPip(false)
         }
     }
