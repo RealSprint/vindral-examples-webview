@@ -25,10 +25,11 @@ Click on the 'Run' button (the green arrow) or press Shift + F10. If you have a 
 
 ### Picture-in-Picture
 
-Android WebView does not support the web Picture-in-Picture API, so the player's own PiP button stays hidden. The example puts the whole activity into Android Picture-in-Picture instead. The code is in `AndroidManifest.xml` and `MainActivity.kt`:
+Android WebView does not support the web Picture-in-Picture API. The example puts the whole activity into Android Picture-in-Picture instead. The code is in `AndroidManifest.xml` and `MainActivity.kt`:
 
 - **Manifest:** the activity sets `android:supportsPictureInPicture="true"` and handles `screenSize|smallestScreenSize|screenLayout|orientation` itself, so entering and leaving PiP does not recreate the activity and reload the player.
-- **Entering:** the PiP button in the control row, or pressing Home or switching apps while the stream plays (Back does not enter PiP). Android 12 (API 31) and later enter by themselves through `setAutoEnterEnabled`; Android 8–11 (API 26–30) use `onUserLeaveHint`. Nothing happens while paused, or before a newly loaded page reports `playing`. If the user has turned PiP off for the app, only the button shows a message.
+- **The player's PiP button:** the player only shows it when the web API exists. The app injects a stand-in for the API with `WebViewCompat.addDocumentStartJavaScript` from `androidx.webkit`, so it is in place before the player's scripts run. `requestPictureInPicture()` calls the app, which enters Android PiP, and the app tells the page when PiP starts and ends so the button shows the right state. A WebView without `DOCUMENT_START_SCRIPT` support shows no button, but Home still enters PiP.
+- **Entering:** the player's PiP button, or pressing Home or switching apps while the stream plays (Back does not enter PiP). Android 12 (API 31) and later enter by themselves through `setAutoEnterEnabled`; Android 8–11 (API 26–30) use `onUserLeaveHint`. Home does nothing while paused, or before a newly loaded page reports `playing`. If the user has turned PiP off for the app, only the button shows a message.
 - **In the PiP window:** the app hides its own control row. It hides the player's controls by toggling an `android-pip` class on the page, which an injected `!important` rule turns into `--vindral-ui-display: none`. This keeps a `player.controlsEnabled=false` setting intact after leaving PiP.
 - **Keep the WebView running:** do not call `webView.onPause()` or `pauseTimers()` when the activity pauses. An activity in PiP is paused, but still visible.
 - **Closing:** `onStop()` pauses the player. It runs when the user closes the PiP window, and also when the app goes to the background without PiP.
@@ -37,4 +38,8 @@ The PiP window is always 16:9. For streams with another aspect ratio, read `vind
 
 Limits of the example: the PiP window has no play/pause buttons (expand it to control playback), audio focus and phone calls are not handled, and the activity's whole content becomes the PiP window.
 
-Tested on Android 11 (API 30) and Android 14 (API 34) emulators.
+### Fullscreen
+
+The player's fullscreen button needs a `WebChromeClient` that implements `onShowCustomView` and `onHideCustomView`; without one, the button does nothing. The example puts the view it gets on top of the activity, hides the system bars, turns the screen to landscape, and leaves fullscreen on Back. Picture-in-Picture from fullscreen shows the fullscreen video.
+
+Tested on a Pixel with Android 17. Picture-in-Picture with the app's own button, before the player's button and fullscreen were added, was also tested on Android 11 (API 30) and Android 14 (API 34) emulators.

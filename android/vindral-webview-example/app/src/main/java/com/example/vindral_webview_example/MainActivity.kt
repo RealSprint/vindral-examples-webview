@@ -1,17 +1,24 @@
 package com.example.vindral_webview_example
 
 import android.app.PictureInPictureParams
+import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.util.Rational
+import android.view.View
+import android.view.ViewGroup
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
@@ -37,7 +44,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import com.example.vindral_webview_example.ui.theme.VindralwebviewexampleTheme
 import com.google.gson.Gson
 
@@ -56,9 +68,18 @@ class MainActivity : ComponentActivity() {
     private var url =
         "https://player.vindral.com/?core.url=https://lb.cdn.vindral.com&core.channelId=vindral_demo1_ci_099ee1fa-80f3-455e-aa23-3d184e93e04f"
 
-    // Picture-in-picture is only offered once playback has started, and never while the activity is stopped.
-    private val canEnterPip = mutableStateOf(false)
+    // Home and app switch only enter picture-in-picture while the stream plays.
+    private var canEnterPip = false
     private val isInPip = mutableStateOf(false)
+
+    private var fullscreenView: View? = null
+    private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
+    private val exitFullscreenOnBack = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            fullscreenCallback?.onCustomViewHidden()
+            exitFullscreen()
+        }
+    }
 
     private val pipSupported: Boolean
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
@@ -91,10 +112,36 @@ class MainActivity : ComponentActivity() {
         })()
         """
 
-        // Hides the player's controls in the PiP window. The class rule is !important, so it wins over
-        // the inline value the player sets for player.controlsEnabled without overwriting it.
-        private fun playerUiScript(hidden: Boolean) =
-            "document.documentElement.classList.toggle('android-pip', $hidden)"
+        // Stands in for the web Picture-in-Picture API that Android WebView lacks, so the player shows its
+        // own PiP button. It runs at document start, because the player checks for the API only once.
+        private const val PIP_POLYFILL =
+        """
+        (() => {
+            let requested = null
+            let active = null
+            Object.defineProperty(Document.prototype, "pictureInPictureEnabled", { get: () => true })
+            Object.defineProperty(Document.prototype, "pictureInPictureElement", { get: () => active })
+            HTMLVideoElement.prototype.requestPictureInPicture = function () {
+                requested = this
+                $JS_INTERFACE.requestPictureInPicture()
+                return Promise.resolve()
+            }
+            // The user leaves picture-in-picture by expanding or closing the window.
+            Document.prototype.exitPictureInPicture = () => Promise.resolve()
+            window.androidPictureInPictureChanged = (isInPip) => {
+                const element = isInPip ? requested ?? window.vindral?.mediaElement : active
+                active = isInPip ? element : null
+                requested = null
+                element?.dispatchEvent(new Event(isInPip ? "enterpictureinpicture" : "leavepictureinpicture"))
+            }
+        })()
+        """
+
+        // Hides the player's controls in the PiP window and updates its PiP button. The class rule is
+        // !important, so it wins over the inline value the player sets for player.controlsEnabled.
+        private fun pipScript(isInPip: Boolean) =
+            "document.documentElement.classList.toggle('android-pip', $isInPip);" +
+                "window.androidPictureInPictureChanged?.($isInPip)"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,8 +154,9 @@ class MainActivity : ComponentActivity() {
         addOnPictureInPictureModeChangedListener { info ->
             Log.d(TAG, "picture-in-picture: ${info.isInPictureInPictureMode}")
             isInPip.value = info.isInPictureInPictureMode
-            webView.evaluateJavascript(playerUiScript(info.isInPictureInPictureMode), null)
+            webView.evaluateJavascript(pipScript(info.isInPictureInPictureMode), null)
         }
+        onBackPressedDispatcher.addCallback(this, exitFullscreenOnBack)
 
         setContent {
             VindralwebviewexampleTheme {
@@ -139,7 +187,7 @@ class MainActivity : ComponentActivity() {
     // Android 12+ enters picture-in-picture by itself through setAutoEnterEnabled.
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R && canEnterPip.value) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R && canEnterPip) {
             enterPip(userRequested = false)
         }
     }
@@ -148,18 +196,18 @@ class MainActivity : ComponentActivity() {
     private fun pipParams(): PictureInPictureParams {
         val builder = PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            builder.setAutoEnterEnabled(canEnterPip.value)
+            builder.setAutoEnterEnabled(canEnterPip)
         }
         return builder.build()
     }
 
     private fun setCanEnterPip(value: Boolean) {
-        if (canEnterPip.value == value) return
-        canEnterPip.value = value
+        if (canEnterPip == value) return
+        canEnterPip = value
         if (pipSupported) setPictureInPictureParams(pipParams())
     }
 
-    // Only a tap on the PiP button explains a failure; leaving the app should not leave a Toast behind.
+    // Only a tap on the player's PiP button explains a failure; leaving the app should not leave a Toast behind.
     private fun enterPip(userRequested: Boolean) {
         if (!pipSupported) return
         val entered = try {
@@ -171,6 +219,16 @@ class MainActivity : ComponentActivity() {
         if (!entered && userRequested) {
             Toast.makeText(this, "Picture-in-picture is unavailable", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun exitFullscreen() {
+        val view = fullscreenView ?: return
+        fullscreenView = null
+        fullscreenCallback = null
+        (window.decorView as FrameLayout).removeView(view)
+        WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        exitFullscreenOnBack.isEnabled = false
     }
 
     private fun play() {
@@ -192,6 +250,9 @@ class MainActivity : ComponentActivity() {
             VindralPlaybackState.PAUSED.state -> setCanEnterPip(false)
         }
     }
+
+    @android.webkit.JavascriptInterface
+    fun requestPictureInPicture() = runOnUiThread { enterPip(userRequested = true) }
 
     @android.webkit.JavascriptInterface
     fun onVolumeState(json: String) = runOnUiThread {
@@ -231,8 +292,33 @@ class MainActivity : ComponentActivity() {
                             JS_CODE,
                             null
                         )
-                        webView.evaluateJavascript(playerUiScript(isInPip.value), null)
+                        webView.evaluateJavascript(pipScript(isInPip.value), null)
                     }
+                }
+
+                // Without this, the player's fullscreen button does nothing.
+                webChromeClient = object : WebChromeClient() {
+                    override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+                        fullscreenView = view
+                        fullscreenCallback = callback
+                        (window.decorView as FrameLayout).addView(
+                            view,
+                            FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                        )
+                        WindowCompat.getInsetsController(window, window.decorView).apply {
+                            hide(WindowInsetsCompat.Type.systemBars())
+                            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                        }
+                        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                        exitFullscreenOnBack.isEnabled = true
+                    }
+
+                    override fun onHideCustomView() = exitFullscreen()
+                }
+
+                if (pipSupported && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                    val origin = Uri.parse(url).let { "${it.scheme}://${it.host}" }
+                    WebViewCompat.addDocumentStartJavaScript(this, PIP_POLYFILL, setOf(origin))
                 }
                 loadUrl(url)
             }
@@ -267,12 +353,6 @@ class MainActivity : ComponentActivity() {
                     pause()
                 }) {
                     Text("Pause")
-                }
-                if (pipSupported) {
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Button(onClick = { enterPip(userRequested = true) }, enabled = canEnterPip.value) {
-                        Text("PiP")
-                    }
                 }
             }
         }
