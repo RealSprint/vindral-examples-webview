@@ -40,4 +40,4 @@ Limits of the example: the PiP window has no play/pause buttons (expand it to co
 
 ### Fullscreen
 
-The player's fullscreen button needs a `WebChromeClient` that implements `onShowCustomView` and `onHideCustomView`; without one, the button does nothing. The example puts the view it gets on top of the activity, hides the system bars, turns the screen to landscape, and leaves fullscreen on Back. Picture-in-Picture from fullscreen shows the fullscreen video.
+The player's fullscreen button needs a `WebChromeClient` that implements `onShowCustomView` and `onHideCustomView`; without one, the button does nothing. The example puts the view it gets on top of the activity, hides the system bars, and turns the screen to landscape. WebView leaves fullscreen on Back by itself. Picture-in-Picture from fullscreen shows the fullscreen video.

@@ -9,14 +9,12 @@ import android.os.Bundle
 import android.util.Log
 import android.util.Rational
 import android.view.View
-import android.view.ViewGroup
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -42,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
@@ -69,10 +66,6 @@ class MainActivity : ComponentActivity() {
     private val isInPip = mutableStateOf(false)
 
     private var fullscreenView: View? = null
-    private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
-    private val exitFullscreenOnBack = object : OnBackPressedCallback(false) {
-        override fun handleOnBackPressed() = exitFullscreen()
-    }
 
     private val pipSupported: Boolean
         get() = packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
@@ -138,7 +131,6 @@ class MainActivity : ComponentActivity() {
             isInPip.value = info.isInPictureInPictureMode
             webView.evaluateJavascript(pipScript(info.isInPictureInPictureMode), null)
         }
-        onBackPressedDispatcher.addCallback(this, exitFullscreenOnBack)
 
         setContent {
             VindralwebviewexampleTheme {
@@ -187,18 +179,6 @@ class MainActivity : ComponentActivity() {
             false
         }
         if (!entered) Log.w(TAG, "picture-in-picture unavailable")
-    }
-
-    private fun exitFullscreen() {
-        val view = fullscreenView ?: return
-        val callback = fullscreenCallback
-        fullscreenView = null
-        fullscreenCallback = null
-        (window.decorView as FrameLayout).removeView(view)
-        WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-        exitFullscreenOnBack.isEnabled = false
-        callback?.onCustomViewHidden()
     }
 
     private fun play() {
@@ -266,25 +246,18 @@ class MainActivity : ComponentActivity() {
                 // Without this, the player's fullscreen button does nothing.
                 webChromeClient = object : WebChromeClient() {
                     override fun onShowCustomView(view: View, callback: CustomViewCallback) {
-                        if (fullscreenView != null) {
-                            callback.onCustomViewHidden()
-                            return
-                        }
                         fullscreenView = view
-                        fullscreenCallback = callback
-                        (window.decorView as FrameLayout).addView(
-                            view,
-                            FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-                        )
-                        WindowCompat.getInsetsController(window, window.decorView).apply {
-                            hide(WindowInsetsCompat.Type.systemBars())
-                            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                        }
+                        (window.decorView as FrameLayout).addView(view)
+                        WindowCompat.getInsetsController(window, window.decorView).hide(WindowInsetsCompat.Type.systemBars())
                         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                        exitFullscreenOnBack.isEnabled = true
                     }
 
-                    override fun onHideCustomView() = exitFullscreen()
+                    override fun onHideCustomView() {
+                        (window.decorView as FrameLayout).removeView(fullscreenView)
+                        fullscreenView = null
+                        WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
+                        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                    }
                 }
 
                 if (pipSupported && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
