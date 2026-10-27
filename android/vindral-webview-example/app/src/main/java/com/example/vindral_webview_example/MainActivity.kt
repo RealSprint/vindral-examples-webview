@@ -2,9 +2,7 @@ package com.example.vindral_webview_example
 
 import android.app.PictureInPictureParams
 import android.content.pm.ActivityInfo
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -20,8 +18,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
-import androidx.annotation.ChecksSdkIntAtLeast
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -79,9 +75,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private val pipSupported: Boolean
-        @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
-        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
+        get() = packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
 
     companion object {
         private const val TAG = "VindralPip"
@@ -114,22 +108,18 @@ class MainActivity : ComponentActivity() {
         private const val PIP_POLYFILL =
         """
         (() => {
-            let requested = null
             let active = null
             Object.defineProperty(Document.prototype, "pictureInPictureEnabled", { get: () => true })
             Object.defineProperty(Document.prototype, "pictureInPictureElement", { get: () => active })
-            HTMLVideoElement.prototype.requestPictureInPicture = function () {
-                requested = this
+            HTMLVideoElement.prototype.requestPictureInPicture = () => {
                 $JS_INTERFACE.requestPictureInPicture()
                 return Promise.resolve()
             }
             // The user leaves picture-in-picture by expanding or closing the window.
-            Document.prototype.exitPictureInPicture = () =>
-                Promise.reject(new DOMException("Expand the window to leave picture-in-picture", "NotSupportedError"))
+            Document.prototype.exitPictureInPicture = () => Promise.reject(new Error("Expand the window instead"))
             window.androidPictureInPictureChanged = (isInPip) => {
-                const element = isInPip ? requested ?? window.vindral?.mediaElement : active
+                const element = isInPip ? window.vindral?.mediaElement : active
                 active = isInPip ? element : null
-                requested = null
                 element?.dispatchEvent(new Event(isInPip ? "enterpictureinpicture" : "leavepictureinpicture"))
             }
         })()
@@ -144,11 +134,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
-            WebView.setWebContentsDebuggingEnabled(true)
-        }
-
-        isInPip.value = isInPictureInPictureMode
         addOnPictureInPictureModeChangedListener { info ->
             isInPip.value = info.isInPictureInPictureMode
             webView.evaluateJavascript(pipScript(info.isInPictureInPictureMode), null)
@@ -175,20 +160,12 @@ class MainActivity : ComponentActivity() {
         if (::webView.isInitialized) pause()
     }
 
-    override fun onDestroy() {
-        if (::webView.isInitialized) webView.destroy()
-        super.onDestroy()
-    }
-
     // Android 12+ enters picture-in-picture by itself through setAutoEnterEnabled.
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R && canEnterPip) {
-            enterPip(userRequested = false)
-        }
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R && canEnterPip) enterPip()
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun pipParams(): PictureInPictureParams {
         val builder = PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -198,23 +175,18 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun setCanEnterPip(value: Boolean) {
-        if (canEnterPip == value) return
         canEnterPip = value
         if (pipSupported) setPictureInPictureParams(pipParams())
     }
 
-    // Only a tap on the player's PiP button explains a failure; leaving the app should not leave a Toast behind.
-    private fun enterPip(userRequested: Boolean) {
+    private fun enterPip() {
         if (!pipSupported) return
         val entered = try {
             enterPictureInPictureMode(pipParams())
         } catch (error: IllegalStateException) {
             false
         }
-        if (!entered) {
-            Log.w(TAG, "picture-in-picture unavailable")
-            if (userRequested) Toast.makeText(this, "Picture-in-picture is unavailable", Toast.LENGTH_SHORT).show()
-        }
+        if (!entered) Log.w(TAG, "picture-in-picture unavailable")
     }
 
     private fun exitFullscreen() {
@@ -254,7 +226,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @android.webkit.JavascriptInterface
-    fun requestPictureInPicture() = runOnUiThread { enterPip(userRequested = true) }
+    fun requestPictureInPicture() = runOnUiThread { enterPip() }
 
     @android.webkit.JavascriptInterface
     fun onVolumeState(json: String) {
@@ -281,12 +253,6 @@ class MainActivity : ComponentActivity() {
                 addJavascriptInterface(this@MainActivity, JS_INTERFACE)
 
                 webViewClient = object : WebViewClient() {
-                    // A new page has to start playing before picture-in-picture is offered again.
-                    override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                        super.onPageStarted(view, url, favicon)
-                        setCanEnterPip(false)
-                    }
-
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
                         webView.evaluateJavascript(

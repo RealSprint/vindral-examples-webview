@@ -25,14 +25,14 @@ Click on the 'Run' button (the green arrow) or press Shift + F10. If you have a 
 
 ### Picture-in-Picture
 
-Android WebView does not support the web Picture-in-Picture API. The example puts the whole activity into Android Picture-in-Picture instead. The code is in `AndroidManifest.xml` and `MainActivity.kt`:
+Android WebView does not support the web Picture-in-Picture API. The example puts the whole activity into Android Picture-in-Picture instead, which needs Android 8.0 (API 26), the example's `minSdk`. The code is in `AndroidManifest.xml` and `MainActivity.kt`:
 
 - **Manifest:** the activity sets `android:supportsPictureInPicture="true"` and handles `screenSize|smallestScreenSize|screenLayout|orientation` itself, so entering and leaving PiP does not recreate the activity and reload the player.
 - **The player's PiP button:** the player only shows it when the web API exists. The app injects a stand-in for the API with `WebViewCompat.addDocumentStartJavaScript` from `androidx.webkit`, so it is in place before the player's scripts run. `requestPictureInPicture()` calls the app, which enters Android PiP, and the app tells the page when PiP starts and ends so the button shows the right state. This is a workaround: the stand-in covers only what the player uses, and `exitPictureInPicture()` rejects, because the user leaves PiP by expanding or closing the window. A WebView without `DOCUMENT_START_SCRIPT` support shows no button, but Home still enters PiP.
-- **Entering:** the player's PiP button, or pressing Home or switching apps while the stream plays (Back does not enter PiP). Android 12 (API 31) and later enter by themselves through `setAutoEnterEnabled`; Android 8–11 (API 26–30) use `onUserLeaveHint`. Home does nothing while paused, or before a newly loaded page reports `playing`. If the user has turned PiP off for the app, only the button shows a message.
+- **Entering:** the player's PiP button, or pressing Home or switching apps while the stream plays (Back does not enter PiP). Android 12 (API 31) and later enter by themselves through `setAutoEnterEnabled`; Android 8–11 (API 26–30) use `onUserLeaveHint`. Home does nothing while paused.
 - **In the PiP window:** the app hides its own control row. It hides the player's controls by toggling an `android-pip` class on the page, which an injected `!important` rule turns into `--vindral-ui-display: none`. This keeps a `player.controlsEnabled=false` setting intact after leaving PiP.
 - **Keep the WebView running:** do not call `webView.onPause()` or `pauseTimers()` when the activity pauses. An activity in PiP is paused, but still visible.
-- **Closing:** `onStop()` pauses the player. It runs when the user closes the PiP window, and also when the app goes to the background without PiP.
+- **Closing:** `onStop()` pauses the player. It runs when the user closes the PiP window, and also when the app goes to the background without PiP. A `playing` state that arrives while the activity is stopped is paused again, because the SDK can resume playback when PiP ends.
 
 The PiP window is always 16:9. For streams with another aspect ratio, read `vindral.mediaElement.videoWidth` and `videoHeight` through the bridge and pass them to `setAspectRatio`. Check that `mediaElement` is a video element (it can be a canvas) and that both values are above 0, and clamp the ratio to Android's limits (1:2.39 to 2.39:1), or `setAspectRatio` throws. `setSourceRectHint` with the WebView's bounds gives a smoother enter animation.
 
