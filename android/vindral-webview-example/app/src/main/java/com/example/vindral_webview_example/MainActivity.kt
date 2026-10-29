@@ -1,8 +1,18 @@
 package com.example.vindral_webview_example
 
+import android.app.PictureInPictureParams
+import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.util.Rational
+import android.view.View
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,12 +31,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import com.example.vindral_webview_example.ui.theme.VindralwebviewexampleTheme
 import com.google.gson.Gson
 
@@ -45,34 +61,78 @@ class MainActivity : ComponentActivity() {
     private var url =
         "https://player.vindral.com/?core.url=https://lb.cdn.vindral.com&core.channelId=vindral_demo1_ci_099ee1fa-80f3-455e-aa23-3d184e93e04f"
 
+    // Home and app switch only enter picture-in-picture while the stream plays.
+    private var canEnterPip = false
+    private val isInPip = mutableStateOf(false)
+
+    private var fullscreenView: View? = null
+
+    private val pipSupported: Boolean
+        get() = packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
+
     companion object {
+        private const val TAG = "VindralPip"
+
         // JavaScript code to handle Vindral events and communicate with the Android interface.
-        // Ensure that $JS_INTERFACE is correctly set up to avoid unnecessary errors.
+        // It attaches to an instance that already exists as well as to one created later.
         private const val JS_INTERFACE = "Android"
         private const val JS_CODE =
         """
-        window.addEventListener("vindral-instance-ready", (event) => {
-            event.detail.on("playback state", (state) => {
-                if (window.$JS_INTERFACE.onPlaybackState) {
-                    window.$JS_INTERFACE.onPlaybackState(state)
-                }
-            })
-            event.detail.on("volume state", (state) => {
-                if (window.$JS_INTERFACE.onVolumeState) {
-                    window.$JS_INTERFACE.onVolumeState(JSON.stringify(state))
-                }
-            })
-            event.detail.on("error", (error) => {
-                if (window.$JS_INTERFACE.onError) {
-                    window.$JS_INTERFACE.onError(JSON.stringify(error))
-                }
-            })
-        })
+        (() => {
+            const style = document.createElement("style")
+            style.textContent = ".android-pip vindral-player { --vindral-ui-display: none !important; }"
+            document.head.appendChild(style)
+            let attached
+            const attach = (vindral) => {
+                if (!vindral || vindral === attached) return
+                attached = vindral
+                vindral.on("playback state", (state) => $JS_INTERFACE.onPlaybackState(state))
+                vindral.on("volume state", (state) => $JS_INTERFACE.onVolumeState(JSON.stringify(state)))
+                vindral.on("error", (error) => $JS_INTERFACE.onError(JSON.stringify(error)))
+                $JS_INTERFACE.onPlaybackState(vindral.playbackState)
+            }
+            window.addEventListener("vindral-instance-ready", (event) => attach(event.detail))
+            attach(window.vindral)
+        })()
         """
+
+        // Stands in for the web Picture-in-Picture API that Android WebView lacks, so the player shows its
+        // own PiP button. It runs at document start, because the player checks for the API only once.
+        private const val PIP_POLYFILL =
+        """
+        (() => {
+            let active = null
+            Object.defineProperty(Document.prototype, "pictureInPictureEnabled", { get: () => true })
+            Object.defineProperty(Document.prototype, "pictureInPictureElement", { get: () => active })
+            HTMLVideoElement.prototype.requestPictureInPicture = () => {
+                $JS_INTERFACE.requestPictureInPicture()
+                return Promise.resolve()
+            }
+            // The user leaves picture-in-picture by expanding or closing the window.
+            Document.prototype.exitPictureInPicture = () => Promise.reject(new Error("Expand the window instead"))
+            window.androidPictureInPictureChanged = (isInPip) => {
+                const element = isInPip ? window.vindral?.mediaElement : active
+                active = isInPip ? element : null
+                element?.dispatchEvent(new Event(isInPip ? "enterpictureinpicture" : "leavepictureinpicture"))
+            }
+        })()
+        """
+
+        // Hides the player's controls in the PiP window and updates its PiP button. The class rule is
+        // !important, so it wins over the inline value the player sets for player.controlsEnabled.
+        private fun pipScript(isInPip: Boolean) =
+            "document.documentElement.classList.toggle('android-pip', $isInPip);" +
+                "window.androidPictureInPictureChanged?.($isInPip)"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        isInPip.value = isInPictureInPictureMode
+        addOnPictureInPictureModeChangedListener { info ->
+            isInPip.value = info.isInPictureInPictureMode
+            webView.evaluateJavascript(pipScript(info.isInPictureInPictureMode), null)
+        }
+
         setContent {
             VindralwebviewexampleTheme {
                 Surface(
@@ -85,6 +145,43 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // Also runs when the user closes the picture-in-picture window. Do not pause the WebView
+    // itself in onPause: the activity is paused, but still visible, while in picture-in-picture.
+    override fun onStop() {
+        super.onStop()
+        setCanEnterPip(false)
+        if (::webView.isInitialized) pause()
+    }
+
+    // Android 12+ enters picture-in-picture by itself through setAutoEnterEnabled.
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R && canEnterPip) enterPip()
+    }
+
+    private fun pipParams(): PictureInPictureParams {
+        val builder = PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            builder.setAutoEnterEnabled(canEnterPip)
+        }
+        return builder.build()
+    }
+
+    private fun setCanEnterPip(value: Boolean) {
+        canEnterPip = value
+        if (pipSupported) setPictureInPictureParams(pipParams())
+    }
+
+    private fun enterPip() {
+        if (!pipSupported) return
+        val entered = try {
+            enterPictureInPictureMode(pipParams())
+        } catch (error: IllegalStateException) {
+            false
+        }
+        if (!entered) Log.w(TAG, "picture-in-picture unavailable")
+    }
+
     private fun play() {
         webView.evaluateJavascript("window.vindral.play()", null)
     }
@@ -94,14 +191,23 @@ class MainActivity : ComponentActivity() {
     }
 
     @android.webkit.JavascriptInterface
-    fun onPlaybackState(state: String) {
-        val playbackState = VindralPlaybackState.valueOf(state.uppercase())
+    fun onPlaybackState(state: String) = runOnUiThread {
         Toast.makeText(
             this,
-            "Playback state: ${playbackState.state}",
+            "Playback state: $state",
             Toast.LENGTH_SHORT
         ).show()
+        // Unknown states are ignored, so a newer player cannot crash the app.
+        when (state) {
+            // A player that starts while the app is in the background is paused again.
+            VindralPlaybackState.PLAYING.state ->
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) setCanEnterPip(true) else pause()
+            VindralPlaybackState.PAUSED.state -> setCanEnterPip(false)
+        }
     }
+
+    @android.webkit.JavascriptInterface
+    fun requestPictureInPicture() = runOnUiThread { enterPip() }
 
     @android.webkit.JavascriptInterface
     fun onVolumeState(json: String) {
@@ -134,7 +240,30 @@ class MainActivity : ComponentActivity() {
                             JS_CODE,
                             null
                         )
+                        webView.evaluateJavascript(pipScript(isInPip.value), null)
                     }
+                }
+
+                // Without this, the player's fullscreen button does nothing.
+                webChromeClient = object : WebChromeClient() {
+                    override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+                        fullscreenView = view
+                        (window.decorView as FrameLayout).addView(view)
+                        WindowCompat.getInsetsController(window, window.decorView).hide(WindowInsetsCompat.Type.systemBars())
+                        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                    }
+
+                    override fun onHideCustomView() {
+                        (window.decorView as FrameLayout).removeView(fullscreenView)
+                        fullscreenView = null
+                        WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
+                        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                    }
+                }
+
+                if (pipSupported && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                    val origin = Uri.parse(url).let { "${it.scheme}://${it.host}" }
+                    WebViewCompat.addDocumentStartJavaScript(this, PIP_POLYFILL, setOf(origin))
                 }
                 loadUrl(url)
             }
@@ -150,7 +279,7 @@ class MainActivity : ComponentActivity() {
     fun WebViewWithControls(url: String) {
         Box(modifier = Modifier.fillMaxSize()) {
             WebViewComposable(url)
-            Row(
+            if (!isInPip.value) Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(16.dp)
